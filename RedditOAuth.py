@@ -3,6 +3,7 @@
 
 # In[2]:
 
+import prawcore
 import requests
 import requests.auth as auth
 import pandas as pd
@@ -85,7 +86,11 @@ def get_submissions(start, end, subr):
 
 def get_submission_comments(sub_id):
     submission = reddit.submission(sub_id)
-    return submission.comments.list()
+    try:
+        comments = submission.comments.list()
+    except: prawcore.exceptions.NotFound as err:
+        comments = []
+    return comments
 
 
 # In[199]:
@@ -96,7 +101,8 @@ def get_all_comments(submissions):
     num_rows = len(submissions['id'])
     for submission_id in submissions['id']:
         sub_comments = get_submission_comments(submission_id)
-        comments.append(extract_comment_data(sub_comments, submission_id))
+        if len(sub_comments) > 0:
+            comments.append(extract_comment_data(sub_comments, submission_id))
         print (count, " / ", num_rows)
         count += 1
     all_comments = pd.concat(comments)
