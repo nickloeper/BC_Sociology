@@ -1,7 +1,7 @@
 
 # coding: utf-8
 
-# In[389]:
+# In[1]:
 
 from bs4 import BeautifulSoup as bs
 import requests as rq
@@ -12,18 +12,19 @@ import re
 
 # ### DataFrame Setup
 
-# In[428]:
+# In[24]:
 
-df_columns = ['FORUM TITLE', 'THREAD TITLE', 'THREAD AUTHOR', 'REPLIES', 'VIEWS', 'URL', 'METADATA', 'DATE', 'BODY']
+df_columns = ['FORUM TITLE', 'THREAD TITLE', 'THREAD AUTHOR', 'REPLIES', 'VIEWS', 'URL', 'METADATA', 'DATE', 'BODY', 'RATINGS LOG']
 all_thread_info = []
 def create_dataframe(): return pd.DataFrame(all_thread_info, columns = df_columns)
 
 
 # ### Load/Parse HTML Files
 
-# In[431]:
+# In[32]:
 
 html_files = glob.glob('eforum/*.html')
+print (html_files)
 
 def fetch_thread_html(thread_url):
     try:
@@ -38,14 +39,14 @@ def open_html_file(file_name): return open(file_name)
 
 # ### Helper Functions
 
-# In[334]:
+# In[26]:
 
 def strip_newlines(string): return string.replace('\n', '')
 
 
 # ### BeautifulSoup Parsing
 
-# In[424]:
+# In[27]:
 
 def extract_thread_urls(thread): return thread.findAll('a')[0]['href']
 def get_thread_tables(soup_html): return soup_html.find('form').findAll('table')
@@ -82,15 +83,19 @@ def extract_post_body(thread_html):
     if body == None:
         return ''
     else:
-        return body.findAll('div')[5].text       
+        return body.findAll('div')[5].text 
+def extract_fieldset(thread_html):
+    rating_log = thread_html.find("a", title="View Rating Log")
+    return '' if rating_log == None else rating_log.find_parent('fieldset')
 
 
 # ### Main
 
-# In[429]:
+# In[28]:
 
 count = 0
 for html_file in html_files:
+    print (html_file)
     html_page = get_bs_object(open_html_file(html_file))
     forum_title = get_forum_title(html_page)
     thread_tables = get_thread_tables(html_page)
@@ -102,13 +107,19 @@ for html_file in html_files:
         thread_info.append(extract_user_info(thread_html))
         thread_info.append(extract_post_date(thread_html))
         thread_info.append(extract_post_body(thread_html))
+        thread_info.append(extract_fieldset(thread_html))
         all_thread_info.append([forum_title] + thread_info)
     count += 1
     print (count, '/', len(html_files), 'DONE')
 df = create_dataframe()
 
 
-# In[430]:
+# In[443]:
 
 df.to_csv('Sex141ThreadData.csv')
+
+
+# In[ ]:
+
+
 
